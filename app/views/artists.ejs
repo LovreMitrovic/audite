@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+    <title>Artists</title>
+</head>
+<body>
+<%- include('partial/navigation')%>
+<h1>Artists</h1>
+<div>
+    <%if(_filter){%>
+        <h4>Alphabetic list for search result:"<%= _filter %>"</h4>
+    <%} else {%>
+            <h4>Alphabetic list of all artists</h4>
+    <%}%>
+    <form action="/artists" method="get">
+        <label for="artists">Search: </label>
+        <input type="hidden" name="limit" value="25">
+        <input type="hidden" name="start" value="0">
+        <input
+                type="text"
+                name="filter"
+                value="" />
+        <input type="submit" value="OK" />
+    </form>
+    <div>
+        <%if(_links.back !== null){%>
+        <a href="<%=_links.back%>">Back</a>
+        <%}%>
+        <%if(_links.back !== null && _links.next !== null){%> | <%}%>
+        <%if(_links.next !== null){%>
+        <a href="<%=_links.next%>">Next</a>
+        <%}%>
+
+    </div>
+    <br>
+    <div>
+    <% for (artist of data){%>
+        <a href="<%= artist.link%>">
+            <%= artist.name%>
+        </a>
+        <br>
+    <%}%>
+    </div>
+</div>
+</body>
+</html>

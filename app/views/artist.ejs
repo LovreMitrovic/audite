@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+    <title>Artist</title>
+    <script>
+        let likeFunction;
+        likeFunction = (element) => {
+            let status = element.getAttribute('status') === 'true';
+            location.href = window.location.href + '/like?value=' + (status ? 'false' : 'true');
+        };
+    </script>
+</head>
+<body>
+
+
+<%- include('partial/navigation')%>
+<h1>Artist</h1>
+<div>
+    <h2><%= name%></h2>
+    <p>mbid: <%=mbid%></p>
+    <form action="/artist/<%=id%>/like" method="post">
+        <input type="hidden" name="value" value="<%= liked ? 'false' : 'true'%>"">
+        <input type="submit" value="<%= liked ? 'Unlike' : 'Like'%>" />
+    </form>
+</div>
+
+<div>
+    <h4>Albums</h4>
+    <% for (album of albums){%>
+        <a href="<%= album.link%>">
+            <%= album.name%>
+        </a>
+        <br>
+    <%}%>
+</div>
+<div>
+    <h4>Tracks</h4>
+    <% for (track of tracks){%>
+        <a href="<%= track.link%>">
+            <%= track.name%>
+        </a>
+        <br>
+    <%}%>
+</div>
+</body>
+</html>
