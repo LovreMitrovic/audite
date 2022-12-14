@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+    <title>Album</title>
+</head>
+<body>
+<%- include('partial/navigation')%>
+<h1>Album</h1>
+<div>
+    <h2><%= name%></h2>
+    <p>mbid: <%= mbid%></p>
+    <p>playcount: <%=playcount%></p>
+    <img src="<%=image_link%>">
+</div>
+<div>
+    <h4>Authors</h4>
+    <% for (author of authors){%>
+        <a href="<%= author.link%>">
+            <%= author.name%>
+        </a>
+        <br>
+    <%}%>
+</div>
+<div>
+    <h4>Tracks</h4>
+    <% for (track of tracks){%>
+        <a href="<%= track.link%>">
+            <%= track.name%>
+        </a>
+        <br>
+    <%}%>
+</div>
+</body>
+</html>

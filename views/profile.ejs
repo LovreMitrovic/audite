@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+    <title>Profile</title>
+</head>
+<body>
+<%- include('partial/navigation')%>
+    <h1>Profile</h1>
+    <div>
+         <h2><%= first_name%> <%= last_name%></h2>
+        <img src="<%= photo%>"
+    </div>
+    <div>
+        <h4>Liked artists</h4>
+        <% for (artist of likedArtists){%>
+            <a href="<%= artist.link%>">
+                <%= artist.name%>
+            </a>
+        <br>
+        <%}%>
+    </div>
+</body>
+</html>
