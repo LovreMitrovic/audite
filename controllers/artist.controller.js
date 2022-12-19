@@ -2,7 +2,7 @@ const db = require("../db/db");
 const toNumber = require("../utils/toNumber");
 const getArtists = (req, res) => {
     const skip = req.query.skip ? parseInt(req.query.skip) : 0;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
     const filter = req.query.filter ? req.query.filter.toLowerCase() : '';
     if(limit > 100){
         res.status(400).send('Max limit is 100');
@@ -50,7 +50,8 @@ const getArtists = (req, res) => {
                         : null,
                     back: skip-limit >= 0
                         ? `/artists/?limit=${limit}&skip=${skip-limit}&filter=${filter}`
-                        : null
+                        : null,
+                    count
                 },
                 _filter: filter ? filter : null
             })
