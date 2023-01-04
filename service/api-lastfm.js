@@ -1,10 +1,10 @@
 const axios = require("axios");
 require('dotenv').config()
 
-class ApiLastfm{
+class ApiLastfm {
 
     //returns [Object]
-    static async getTopArtistsFromGeo(country){
+    static async getTopArtistsFromGeo(country) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -20,7 +20,7 @@ class ApiLastfm{
     }
 
     //returns [Object]
-    static async getTopTracksFromGeo(country){
+    static async getTopTracksFromGeo(country) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -36,7 +36,7 @@ class ApiLastfm{
     }
 
     //returns Object
-    static async getArtistInfo(artistName){
+    static async getArtistInfo(artistName) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -52,7 +52,7 @@ class ApiLastfm{
     }
 
     //returns [Object]
-    static async getSimilarArtists(artistName){
+    static async getSimilarArtists(artistName) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -68,7 +68,7 @@ class ApiLastfm{
     }
 
     //returns [Object]
-    static async getTopAlbumsFromArtist(artistName){
+    static async getTopAlbumsFromArtist(artistName) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -84,7 +84,7 @@ class ApiLastfm{
     }
 
     //returns [Object]
-    static async getTopTracksFromArtist(artistName){
+    static async getTopTracksFromArtist(artistName) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -100,7 +100,7 @@ class ApiLastfm{
     }
 
     //returns Object
-    static async getAlbumInfo(artistName, albumName){
+    static async getAlbumInfo(artistName, albumName) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -117,7 +117,7 @@ class ApiLastfm{
     }
 
     //returns Object
-    static async getTrackInfo(artistName, trackName){
+    static async getTrackInfo(artistName, trackName) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -134,7 +134,7 @@ class ApiLastfm{
     }
 
     //returns [Object]
-    static async getSimilarTracks(artistName, trackName){
+    static async getSimilarTracks(artistName, trackName) {
         const options = {
             method: 'GET',
             url: process.env.LASTFM_API_URL,
@@ -147,10 +147,39 @@ class ApiLastfm{
             }
         }
         const response = await axios.request(options);
-        return response.data.similartracks.track
+        return response.data.similartracks.track;
+
     }
 
+    static async searchTrack(trackName){
+        const options = {
+            method: 'GET',
+            url: process.env.LASTFM_API_URL,
+            params: {
+                method: 'track.search',
+                track: trackName,
+                api_key: process.env.LASTFM_API_KEY,
+                format: 'json'
+            }
+        }
+        const response = await axios.request(options);
+        return response.data.results;
+    }
 
+    static async searchArtist(artistName){
+        const options = {
+            method: 'GET',
+            url: process.env.LASTFM_API_URL,
+            params: {
+                method: 'artist.search',
+                artist: artistName,
+                api_key: process.env.LASTFM_API_KEY,
+                format: 'json'
+            }
+        }
+        const response = await axios.request(options);
+        return response.data.results;
+    }
 }
 
 module.exports = ApiLastfm

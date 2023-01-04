@@ -8,7 +8,7 @@ const artistController = require('../controllers/artist.controller')
 const albumController = require('../controllers/album.controller')
 const userController = require('../controllers/user.controller')
 const likeController = require('../controllers/like.controller')
-
+const searchController = require('../controllers/search.controller')
 
 router.get('/facebook', passport.authenticate('facebook', {scope:['email','user_friends']}));
 router.get('/api/auth/facebook', passport.authenticate('facebook',
@@ -37,6 +37,8 @@ router.post('/:label/:id/like',isLogged, likeController.like)
 router.get('/album/:id', albumController.getAlbum);
 
 router.get('/track/:id', trackController.getTrack);
+
+router.get('/search', searchController.getSearch);
 
 router.get('/me',isLogged, userController.getMyUser);
 

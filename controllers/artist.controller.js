@@ -6,6 +6,7 @@ const getArtists = (req, res) => {
     const filter = req.query.filter ? req.query.filter.toLowerCase() : '';
     if(limit > 100){
         res.status(400).send('Max limit is 100');
+        return;
     }
     let pCount;
     let pArtists
