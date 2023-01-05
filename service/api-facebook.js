@@ -19,6 +19,20 @@ class ApiFacebook {
           id: '263012381947161'
         }
      */
+
+    async getUserCountry() {
+        const options = {
+            method: 'GET',
+            url: 'https://graph.facebook.com/v15.0/me?',
+            params: {
+                fields: 'location{location}',
+                access_token: this.user.token
+            }
+        }
+        const response = await axios.request(options);
+        return response.data.location.location.country
+    }
+
     async getLikedMusic() {
         const options = {
             method: 'GET',
