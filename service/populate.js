@@ -4,12 +4,23 @@ const db = require("../db/db");
 const imageapi = require("./api-coverart");
 const fbApi = require("./api-facebook");
 const {Error} = require("mongoose");
+const apiMusicMatch = require("./api-musicmatch");
 
 function sterilaze(obj){
     if (obj.mbid === '') {
         return {...obj, mbid:null};
     }
     return obj;
+}
+
+//Params: name of artist and track Returns: string contains 30% of lyrics
+async function populateWithLyrics(artistName,trackName){
+    const tracks = await apiMusicMatch.searchTrack(trackName,artistName);
+    //I wont try iterating because of very limited number of api calls
+    const track = tracks[0].track
+    const mmid = track['track_id'];
+    const lyrics = await apiMusicMatch.getLyrics(mmid);
+    return lyrics;
 }
 
 async function populateWithSImilarArtists(artist){
@@ -40,6 +51,7 @@ async function populateArtist(name,limitAlbum) {
         }
         artist = await db.create('artist', artistInfo);
     }
+
     console.log('[POPULATE]: getting albums for artist'+ name);
     let albumList = await api.getTopAlbumsFromArtist(name);
     let num = 0;
@@ -65,6 +77,14 @@ async function populateArtist(name,limitAlbum) {
                     let trackInfo = await api.getTrackInfo(name,trackData.name)
                     track = await db.create('track', trackInfo)
                 }
+                populateWithLyrics(name, trackData.name)
+                    .then((lyrics)=>{
+                        track.update({lyrics})
+                        console.log('LYRICS POPULATE: Found lyrics for '+name + ' ' + trackData.name);
+                    })
+                    .catch((err)=>{
+                        console.log('LYRICS POPULATE: Couldnt find lyrics for '+name + ' ' + trackData.name);
+                    })
                 await album.relateTo(track, 'contains_track');
                 await artist.relateTo(track, 'created_track');
             }

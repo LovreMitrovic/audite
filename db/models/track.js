@@ -27,5 +27,9 @@ module.exports = {
     image_link:{
         type: 'string',
         optional: 'true'
+    },
+    lyrics:{
+        type: 'string',
+        optional: 'true'
     }
 }
