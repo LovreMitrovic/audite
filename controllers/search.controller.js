@@ -1,5 +1,7 @@
 const db = require("../db/db");
 const toNumber = require("../utils/toNumber");
+const apiLastFm = require("../service/api-lastfm");
+const {populateArtist, populateTrack} = require("../service/populate");
 const getSearch = (req, res) => {
     const skip = req.query.skip ? parseInt(req.query.skip) : 0;
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
@@ -46,4 +48,56 @@ const getSearch = (req, res) => {
         })
 }
 
-module.exports = {getSearch}
+async function broadSearchArtist(artistName,skip,limit){
+
+    const dataArtists = await apiLastFm.searchArtist(artistName);
+    const artists = dataArtists.artistmatches.artist.filter((artist) => artist.mbid !== '').map((artist) => artist.name).slice(skip,limit);
+    const promises = artists.map((artistName) => {
+        return populateArtist(artistName, 1);
+    })
+
+    return await Promise.all(promises);
+}
+async function broadSearchTrack(trackName,skip,limit){
+    const dataTracks = await apiLastFm.searchTrack(trackName);
+    const tracks = dataTracks.trackmatches.track.filter((track) => track.mbid !== '').slice(skip,limit);
+    for(let artist of tracks.map((track) => track.artist)){
+        await populateArtist(artist,1)
+    }
+    let nodes = [];
+    for(let track of tracks){
+        const artistNode = await db.first('artist','name',track.artist);
+        const node = await populateTrack(track.name,artistNode,null);
+        nodes.push(node)
+    }
+    return nodes
+
+}
+
+const advancedSearch = async (req,res) => {
+    const myQuery = req.query.query ? req.query.query.toLowerCase() : '';
+    const artistSkip = req.query.artistskip ? req.query.artistskip : 0;
+    const artistLimit = req.query.artistlimit ? req.query.artistlimit : 1;
+
+    const trackSkip = req.query.trackskip ? req.query.trackskip : 0;
+    const trackLimit = req.query.tracklimit ? req.query.tracklimit : 1;
+
+    if(!myQuery){
+        res.status(400).send('Limit needs to be between 1 and 100, skip needs to be positive and filter needs to be present');
+    }
+
+    let artists = await broadSearchArtist(myQuery,artistSkip,artistLimit);
+    let tracks = await broadSearchTrack(myQuery,trackSkip,trackLimit);
+
+    res.send({
+        data: tracks.concat(artists).map((node) => ({
+            name: node.get('name'),
+            label: node.labels()[0],
+            link: `/${node.labels()[0]}/${toNumber(node.identity())}`
+        }))
+    })
+
+}
+
+
+module.exports = {getSearch, advancedSearch}

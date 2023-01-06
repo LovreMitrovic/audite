@@ -23,6 +23,28 @@ async function populateWithLyrics(artistName,trackName){
     return lyrics;
 }
 
+async function populateTrack(trackName, artistNode, albumNode){
+    const artistName = artistNode.get('name');
+    let track = await db.first('track', 'name', trackName);
+    if (!track) {
+        let trackInfo = await api.getTrackInfo(artistName,trackName)
+        track = await db.create('track', trackInfo)
+    }/*
+    populateWithLyrics(artistName, trackName)
+        .then((lyrics)=>{
+            track.update({lyrics})
+            console.log('LYRICS POPULATE: Found lyrics for '+artistName + ' ' + trackName);
+        })
+        .catch((err)=>{
+            console.log('LYRICS POPULATE: Couldnt find lyrics for '+artistName + ' ' + trackName);
+        })*/
+    if(albumNode){
+        await albumNode.relateTo(track, 'contains_track');
+    }
+    await artistNode.relateTo(track, 'created_track');
+    return track;
+}
+
 async function populateWithSImilarArtists(artist){
     //if(current > limit){return}
     let artistInfo = await api.getArtistInfo(artist.get('name'));
@@ -40,6 +62,8 @@ async function populateWithSImilarArtists(artist){
         //    .then(()=>console.log('Populated similar '+similar.name))
     }
 }
+
+//async function populateTrack(trackName, artist)
 
 async function populateArtist(name,limitAlbum) {
     let artist = await db.first('artist', 'name', name);
@@ -72,21 +96,7 @@ async function populateArtist(name,limitAlbum) {
             .catch(()=>console.log('IMAGE API: There is no image for '+albumInfo.name))
         if (albumInfo.tracks.track) {
             for (let trackData of albumInfo.tracks.track) {
-                let track = await db.first('track', 'name', trackData.name);
-                if (!track) {
-                    let trackInfo = await api.getTrackInfo(name,trackData.name)
-                    track = await db.create('track', trackInfo)
-                }
-                populateWithLyrics(name, trackData.name)
-                    .then((lyrics)=>{
-                        track.update({lyrics})
-                        console.log('LYRICS POPULATE: Found lyrics for '+name + ' ' + trackData.name);
-                    })
-                    .catch((err)=>{
-                        console.log('LYRICS POPULATE: Couldnt find lyrics for '+name + ' ' + trackData.name);
-                    })
-                await album.relateTo(track, 'contains_track');
-                await artist.relateTo(track, 'created_track');
+                await populateTrack(trackData.name,artist,album);
             }
 
         }
@@ -129,4 +139,4 @@ async function connectWithFriends(userObj){
     }
 }
 
-module.exports = {populateArtist, populateWithSImilarArtists, populateWithFacebookLikes, connectWithFriends}
+module.exports = {populateArtist, populateWithSImilarArtists, populateWithFacebookLikes, connectWithFriends, populateTrack}
