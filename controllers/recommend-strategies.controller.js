@@ -81,7 +81,7 @@ const recommendArtistsBasedOnLikes = (req, res) => {
 //Onda se uzimaju svih slični artisti njihove pjesme i gleda se koje su 2 najsličnije pjesme po svakom artistu
 //Od 2 najslicnije pjesme se uzimaju podaci o artistu, ime pjesme i lyricsi
 const recommendSimilarTracks = async (req, res) => {
-    const numOfRecommendationsPerLikedArtist = 2
+    const numOfRecommendationsPerLikedArtist = 10;
     var recommendedArtistTracks = Array()
 
     const skip = req.query.skip ? parseInt(req.query.skip) : 0;
@@ -112,7 +112,7 @@ const recommendSimilarTracks = async (req, res) => {
                     .to('other', 'track')
                     .where('this.name', likedArtist.name)
                     .return('other')
-                    .limit(1)
+                    .limit(numOfRecommendationsPerLikedArtist)
                     .orderBy('other.playcount DESC')
                     .where('other.lyrics is not null')
                     .execute()
@@ -217,6 +217,8 @@ const recommendSimilarTracks = async (req, res) => {
                         }
                     })
             }
+
+            recommendedArtistTracks = [... new Map(recommendedArtistTracks.map((obj) => [obj.link, obj])).values()]
 
 
             const count = recommendedArtistTracks.length
