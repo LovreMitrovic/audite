@@ -18,14 +18,14 @@ const stringSimilarity = require('string-similarity');
 const recommendArtistsBasedOnLikes = (req, res) => {
     const skip = req.query.skip ? parseInt(req.query.skip) : 0;
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    if(limit > 100){
+    if (limit > 100) {
         res.status(400).send('Max limit is 100');
     }
 
     const pLikedArtists = db.query()
-        .match('this','user')
-        .relationship('likes','out','rel')
-        .to('other','artist')
+        .match('this', 'user')
+        .relationship('likes', 'out', 'rel')
+        .to('other', 'artist')
         .where('this.fid', req.user.fid)
         .return('other').execute()
 
@@ -40,39 +40,39 @@ const recommendArtistsBasedOnLikes = (req, res) => {
             for (let likedArtist of likedArtists.values()) {
                 let similarArtists = await apiLastFm.getSimilarArtists(likedArtist.name)
 
-                for(simArtist of similarArtists){
-                    let name=simArtist["name"]
+                for (simArtist of similarArtists) {
+                    let name = simArtist["name"]
                     let artist = await db.first('artist', 'name', name);
                     if (!artist) {
-                        console.log('[POPULATE]: getting info for artist'+ name);
+                        console.log('[POPULATE]: getting info for artist' + name);
                         let artistInfo = await lastFmApi.getArtistInfo(name);
-                        if(artistInfo === undefined){
-                            throw new Error('Couldnt find information for artist: '+name);
+                        if (artistInfo === undefined) {
+                            throw new Error('Couldnt find information for artist: ' + name);
                         }
                         artist = await db.create('artist', artistInfo);
-                    } else{
-                        console.log("Artist "+name+" found in DB")
+                    } else {
+                        console.log("Artist " + name + " found in DB")
                     }
                     similarArtistsArray.push({
-                        name:artist.get("name"),
-                        link:'/artist/'+artist.id()
+                        name: artist.get("name"),
+                        link: '/artist/' + artist.id()
                     })
                 }
             }
 
-            const count=similarArtistsArray.length
-            if(skip >= count){
+            const count = similarArtistsArray.length
+            if (skip >= count) {
                 res.status(404)
             }
 
             res.send({
-                data: similarArtistsArray.slice(skip,skip+limit),
+                data: similarArtistsArray.slice(skip, skip + limit),
                 _links: {
-                    next: skip+limit <= count
-                        ? `/recommend_strategy1/?limit=${limit}&skip=${skip+limit}`
+                    next: skip + limit <= count
+                        ? `/recommend_strategy1/?limit=${limit}&skip=${skip + limit}`
                         : null,
-                    back: skip-limit >= 0
-                        ? `/recommend_strategy1/?limit=${limit}&skip=${skip-limit}`
+                    back: skip - limit >= 0
+                        ? `/recommend_strategy1/?limit=${limit}&skip=${skip - limit}`
                         : null,
                     count
                 },
@@ -90,45 +90,45 @@ const recommendArtistsBasedOnLocation = async (req, res) => {
     }
 
     let country = await new fbApi(req.user).getUserCountry()
-        .catch((e)=> {
-                console.log("Greška " + e)
-                res.send(country)
-            })
+        .catch((e) => {
+            console.log("Greška " + e)
+            res.send(country)
+        })
 
     let countryArtists = Array()
     let countryTopArtists = await apiLastFm.getTopArtistsFromGeo(country)
-    for(cArtist of countryTopArtists){
-        let name=cArtist["name"]
+    for (cArtist of countryTopArtists) {
+        let name = cArtist["name"]
         let artist = await db.first('artist', 'name', name);
         if (!artist) {
-            console.log('[POPULATE]: getting info for artist'+ name);
+            console.log('[POPULATE]: getting info for artist' + name);
             let artistInfo = await lastFmApi.getArtistInfo(name);
-            if(artistInfo === undefined){
-                throw new Error('Couldnt find information for artist: '+name);
+            if (artistInfo === undefined) {
+                throw new Error('Couldnt find information for artist: ' + name);
             }
             artist = await db.create('artist', artistInfo);
-        } else{
-            console.log("Artist "+name+" found in DB")
+        } else {
+            console.log("Artist " + name + " found in DB")
         }
         countryArtists.push({
-            name:artist.get("name"),
-            link:'/artist/'+artist.id()
+            name: artist.get("name"),
+            link: '/artist/' + artist.id()
         })
     }
 
-    const count=countryArtists.length
-    if(skip >= count){
+    const count = countryArtists.length
+    if (skip >= count) {
         res.status(404)
     }
 
     res.send({
-        data: countryArtists.slice(skip,skip+limit),
+        data: countryArtists.slice(skip, skip + limit),
         _links: {
-            next: skip+limit <= count
-                ? `/recommend_strategy2/?limit=${limit}&skip=${skip+limit}`
+            next: skip + limit <= count
+                ? `/recommend_strategy2/?limit=${limit}&skip=${skip + limit}`
                 : null,
-            back: skip-limit >= 0
-                ? `/recommend_strategy2/?limit=${limit}&skip=${skip-limit}`
+            back: skip - limit >= 0
+                ? `/recommend_strategy2/?limit=${limit}&skip=${skip - limit}`
                 : null,
             count
         },
@@ -136,25 +136,25 @@ const recommendArtistsBasedOnLocation = async (req, res) => {
     })
 }
 
-//Za svakog lajkanog artista iz baze uzima se najpopularnija pjesma i njezin tekst
-//Onda se uzima x (3) slicnih artista i po 2 njihove pjesme i gleda se koje su 2 najslicnije pjesme
+//Za svakog lajkanog artista iz baze uzima se najslušanija pjesma i njezin tekst
+//Onda se uzimaju svih slični artisti njihove pjesme i gleda se koje su 2 najsličnije pjesme po svakom artistu
 //Od 2 najslicnije pjesme se uzimaju podaci o artistu, ime pjesme i lyricsi
-const recommendSimilarTracks= async (req, res) =>  {
+const recommendSimilarTracks = async (req, res) => {
+    const numOfRecommendationsPerLikedArtist = 2
+    var recommendedArtistTracks = Array()
+
     const skip = req.query.skip ? parseInt(req.query.skip) : 0;
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    if(limit > 100){
+    if (limit > 100) {
         res.status(400).send('Max limit is 100');
     }
 
     const pLikedArtists = db.query()
-        .match('this','user')
-        .relationship('likes','out','rel')
-        .to('other','artist')
+        .match('this', 'user')
+        .relationship('likes', 'out', 'rel')
+        .to('other', 'artist')
         .where('this.fid', req.user.fid)
         .return('other').execute()
-
-    var recommendedArtistTracks=Array()
-    var artistArray=Array()
 
     Promise.all([pLikedArtists])
         .then(async ([queryLikes]) => {
@@ -163,104 +163,102 @@ const recommendSimilarTracks= async (req, res) =>  {
             }));
 
             for (let likedArtist of likedArtists.values()) {
-                let artistTracks=new Map()
-                let topTracks=await lastFmApi.getTopTracksFromArtist(likedArtist.name)
-                let track=await musicMatchApi.searchTrack(topTracks.toptracks.track[0].name,likedArtist.name)
+                var allSimilarArtistLyrics = Array()
 
-                /* for(i=0;i<1 || i==topTracks.toptracks.track.length;i++){
-                     let track=await musicMatchApi.searchTrack(topTracks.toptracks.track[i].name,likedArtist.name)
-                     let lyrics= await musicMatchApi.getLyrics(topTracks.toptracks.track[i].track_id)
-                     top3Tracks.push({
-                         rank: i+1,
-                         name:topTracks.toptracks.track[i].name,
-                         lyrics:lyrics
-                     })
-                 }*/
-                let lyrics= await musicMatchApi.getLyrics(track[0].track.track_id)
+                const topTrack = db.query()
+                    .match('this', 'artist')
+                    .relationship('created_track', 'out', 'rel')
+                    .to('other', 'track')
+                    .where('this.name', likedArtist.name)
+                    .return('other')
+                    .limit(1)
+                    .orderBy('other.playcount DESC')
+                    .execute()
+                const similarArtists = db.query()
+                    .match('this', 'artist')
+                    .relationship('similar_artist', 'out', 'rel')
+                    .to('other', 'artist')
+                    .where('this.name', likedArtist.name)
+                    .return('other')
+                    .execute()
 
-               // artistTracks.set(likedArtist.name, topTracksWithLyrics)
-                artistTracks.set(likedArtist.name, lyrics)
+                await Promise.all([topTrack, similarArtists])
+                    .then(async ([queryTracks, queryArtists]) => {
+                        let topTrackOfLikedArtist = queryTracks.records.map((r) => ({
+                            name: r.get('other').properties.name,
+                            lyrics: r.get('other').properties.lyrics
+                        }));
 
-                //Top 2 tracka od 3 slicnih artista lajkanima
-                let similarArtists = await apiLastFm.getSimilarArtists(likedArtist.name)
-                let similarArtistTracks=new Map()
-                let allSimilarLyrics=Array()
-                for(i2=0;i2<3;i2++){
-                    let name=similarArtists[i2].name
-                    let topTracks=await lastFmApi.getTopTracksFromArtist(name)
-                    let topTracksSimilarWithLyrics=Array()
-                    for(i3=0;i3<2 || i3==topTracks.toptracks.track.length;i3++){
-                        let track=await musicMatchApi.searchTrack(topTracks.toptracks.track[i3].name, name)
-                        let lyrics=""
-                        try {
-                            lyrics = await musicMatchApi.getLyrics(track[0].track.track_id)
-                        }catch (e) {
+                        let similarArtists = queryArtists.records.map((r) => ({
+                            name: r.get('other').properties.name,
+                            id: r.get('other').identity.low,
+                            tracks: Array()
+                        }))
+
+                        for (similarArtist of similarArtists) {
+                            const topTracks2 = db.query()
+                                .match('this', 'artist')
+                                .relationship('created_track', 'out', 'rel')
+                                .to('other', 'track')
+                                .where('this.name', similarArtist.name)
+                                .return('other')
+                                .orderBy('other.playcount DESC')
+                                .execute()
+
+                            await Promise.all([topTracks2])
+                                .then(async ([queryTracks]) => {
+                                    for (record of queryTracks.records) {
+                                        //Uspoređivat ce se samo s pjesmama koje imaju lyricse
+                                        if (record.get('other').properties.lyrics !== undefined) {
+                                            allSimilarArtistLyrics.push(record.get('other').properties.lyrics)
+                                        }
+                                        similarArtist.tracks.push({
+                                            name: record.get('other').properties.name,
+                                            lyrics: record.get('other').properties.lyrics
+                                        })
+                                    }
+                                })
                         }
-                        allSimilarLyrics.push(lyrics)
-                        topTracksSimilarWithLyrics.push({
-                            rank: i3+1,
-                            name:topTracks.toptracks.track[i3].name,
-                            lyrics:lyrics
-                        })
-                    }
-                    similarArtistTracks.set(name, topTracksSimilarWithLyrics)
-                }
 
-                for (let [key,value] of artistTracks){
-                    let artist=key
-                    let textLyrics=value
-                    let result=stringSimilarity.findBestMatch(textLyrics,allSimilarLyrics)
-                    let ratings=result.ratings
-                    ratings = ratings.sort((r1, r2) => (r1.rating > r2.rating) ? -1 : (r1.rating < r2.rating) ? 1 : 0);
-                    //Uzimam dva najslicnija teksta i stavljam Autora i tu pjesmu u polje
-                    for(i=0;i<2;i++){
-                        let lyrics=ratings[i].target
-                        for (let [key,value] of similarArtistTracks){
-                            for(song of value){
-                                if(song.lyrics===lyrics){
-                                    recommendedArtistTracks.push({artistName:key,track:song.name, lyrics:lyrics})
+                        //Ako pjesma lajkanog artista nema lyricse, stavlja se na prazni string, onda sličnost nema smisla ali se bar dobi neki output
+                        let likedArtistLyrics = topTrackOfLikedArtist[0].lyrics
+                        if (likedArtistLyrics === undefined) {
+                            likedArtistLyrics = ""
+                        }
+                        let result = stringSimilarity.findBestMatch(likedArtistLyrics, allSimilarArtistLyrics)
+                        let ratings = result.ratings
+                        ratings = ratings.sort((r1, r2) => (r1.rating > r2.rating) ? -1 : (r1.rating < r2.rating) ? 1 : 0);
+                        for (i = 0; i < numOfRecommendationsPerLikedArtist; i++) {
+                            let lyrics = ratings[i].target
+                            for (similarArtist of similarArtists) {
+                                for (similarTrack of similarArtist.tracks) {
+                                    if (similarTrack.lyrics === lyrics) {
+                                        recommendedArtistTracks.push({
+                                            artistName: similarArtist.name,
+                                            track: similarTrack.name,
+                                            lyrics: similarTrack.lyrics,
+                                            link: '/artist/' + similarArtist.id
+                                        })
+                                    }
                                 }
                             }
                         }
-                    }
-            }
-            }
-
-            for(artistTrack of recommendedArtistTracks){
-                let name=artistTrack.artistName
-                let artist = await db.first('artist', 'name', name);
-                if (!artist) {
-                    console.log('[POPULATE]: getting info for artist'+ name);
-                    let artistInfo = await lastFmApi.getArtistInfo(name);
-                    if(artistInfo === undefined){
-                        throw new Error('Couldnt find information for artist: '+name);
-                    }
-                    artist = await db.create('artist', artistInfo);
-                } else{
-                    console.log("Artist "+name+" found in DB")
-                }
-
-                artistArray.push({
-                    name:name,
-                    track:artistTrack.track,
-                    lyrics:artistTrack.lyrics,
-                    link:'/artist/'+artist.id()
-                })
+                    })
             }
 
-            const count=artistArray.length
-            if(skip >= count){
+            const count = recommendedArtistTracks.length
+            if (skip >= count) {
                 res.status(404)
             }
 
             res.send({
-                data: artistArray.slice(skip,skip+limit),
+                data: recommendedArtistTracks.slice(skip, skip + limit),
                 _links: {
-                    next: skip+limit <= count
-                        ? `/recommend_strategy3/?limit=${limit}&skip=${skip+limit}`
+                    next: skip + limit <= count
+                        ? `/recommend_strategy3/?limit=${limit}&skip=${skip + limit}`
                         : null,
-                    back: skip-limit >= 0
-                        ? `/recommend_strategy3/?limit=${limit}&skip=${skip-limit}`
+                    back: skip - limit >= 0
+                        ? `/recommend_strategy3/?limit=${limit}&skip=${skip - limit}`
                         : null,
                     count
                 },
@@ -270,4 +268,4 @@ const recommendSimilarTracks= async (req, res) =>  {
 
 }
 
-module.exports = {recommendArtistsBasedOnLikes,recommendArtistsBasedOnLocation,recommendSimilarTracks}
+module.exports = {recommendArtistsBasedOnLikes, recommendArtistsBasedOnLocation, recommendSimilarTracks}
