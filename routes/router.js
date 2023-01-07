@@ -53,11 +53,11 @@ router.post('/me',isLogged, userController.postInfo);
 
 router.get('/me/logout', userController.logout);
 
-router.get('/recommend-strategy1', recommendStrategiesController.recommendSimilarTracks)
+router.get('/recommend-similar-track', recommendStrategiesController.recommendSimilarTracks)
 
-router.get('/recommend-strategy2', recommendStrategiesController.recommendArtistsBasedOnLocation)
+router.get('/recommend-likes', recommendStrategiesController.recommendArtistsBasedOnLikes)
 
-router.get('/recommend-user-similarity', getUserBasedReccomendation);
+router.get('/recommend-similar-user', getUserBasedReccomendation);
 
 
 
