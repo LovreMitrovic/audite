@@ -52,9 +52,10 @@ router.post('/me',isLogged, userController.postInfo);
 
 router.get('/me/logout', userController.logout);
 
-router.get('/recommend_strategy1', recommendStrategiesController.recommendSimilarTracks)
+router.get('/recommend_strategy1', recommendStrategiesController.recommendArtistsBasedOnLikes)
 
-router.get('/recommend_strategy2', recommendStrategiesController.recommendArtistsBasedOnLocation)
+router.get('/recommend_strategy2', recommendStrategiesController.recommendSimilarTracks)
+
 
 
 
