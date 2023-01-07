@@ -13,6 +13,9 @@ const app = express();
 
 const neo4jSessionStore = require('neo4j-sessionstore');
 
+// static files (for css, images, etc)
+app.use(express.static(__dirname + '/public'));
+
 //decalare middlewares
 app.set('view engine', 'ejs');
 
