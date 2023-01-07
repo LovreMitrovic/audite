@@ -173,6 +173,7 @@ const recommendSimilarTracks = async (req, res) => {
                     .return('other')
                     .limit(1)
                     .orderBy('other.playcount DESC')
+                    .where('other.lyrics is not null')
                     .execute()
                 const similarArtists = db.query()
                     .match('this', 'artist')
@@ -195,56 +196,86 @@ const recommendSimilarTracks = async (req, res) => {
                             tracks: Array()
                         }))
 
-                        for (similarArtist of similarArtists) {
-                            const topTracks2 = db.query()
-                                .match('this', 'artist')
-                                .relationship('created_track', 'out', 'rel')
-                                .to('other', 'track')
-                                .where('this.name', similarArtist.name)
-                                .return('other')
-                                .orderBy('other.playcount DESC')
-                                .execute()
-
-                            await Promise.all([topTracks2])
-                                .then(async ([queryTracks]) => {
-                                    for (record of queryTracks.records) {
-                                        //Uspoređivat ce se samo s pjesmama koje imaju lyricse
-                                        if (record.get('other').properties.lyrics !== undefined) {
-                                            allSimilarArtistLyrics.push(record.get('other').properties.lyrics)
-                                        }
-                                        similarArtist.tracks.push({
-                                            name: record.get('other').properties.name,
-                                            lyrics: record.get('other').properties.lyrics
-                                        })
-                                    }
-                                })
-                        }
-
-                        //Ako pjesma lajkanog artista nema lyricse, stavlja se na prazni string, onda sličnost nema smisla ali se bar dobi neki output
-                        let likedArtistLyrics = topTrackOfLikedArtist[0].lyrics
-                        if (likedArtistLyrics === undefined) {
-                            likedArtistLyrics = ""
-                        }
-                        let result = stringSimilarity.findBestMatch(likedArtistLyrics, allSimilarArtistLyrics)
-                        let ratings = result.ratings
-                        ratings = ratings.sort((r1, r2) => (r1.rating > r2.rating) ? -1 : (r1.rating < r2.rating) ? 1 : 0);
-                        for (i = 0; i < numOfRecommendationsPerLikedArtist; i++) {
-                            let lyrics = ratings[i].target
+                        //Ako lajkani artist ima bar jednu pjesmu s lyricsima, inace ga preskoci
+                        if(topTrackOfLikedArtist.length!==0) {
                             for (similarArtist of similarArtists) {
-                                for (similarTrack of similarArtist.tracks) {
-                                    if (similarTrack.lyrics === lyrics) {
-                                        recommendedArtistTracks.push({
-                                            artistName: similarArtist.name,
-                                            track: similarTrack.name,
-                                            lyrics: similarTrack.lyrics,
-                                            link: '/artist/' + similarArtist.id
-                                        })
+                                const topTracks2 = db.query()
+                                    .match('this', 'artist')
+                                    .relationship('created_track', 'out', 'rel')
+                                    .to('other', 'track')
+                                    .where('this.name', similarArtist.name)
+                                    .return('other')
+                                    .orderBy('other.playcount DESC')
+                                    .execute()
+
+                                await Promise.all([topTracks2])
+                                    .then(async ([queryTracks]) => {
+                                        for (record of queryTracks.records) {
+                                            //Uspoređivat ce se samo s pjesmama koje imaju lyricse
+                                            if (record.get('other').properties.lyrics !== undefined) {
+                                                allSimilarArtistLyrics.push(record.get('other').properties.lyrics)
+                                            }
+                                            similarArtist.tracks.push({
+                                                name: record.get('other').properties.name,
+                                                lyrics: record.get('other').properties.lyrics
+                                            })
+                                        }
+                                    })
+                            }
+
+                            //Ako pjesma lajkanog artista nema lyricse, stavlja se na prazni string, onda sličnost nema smisla ali se bar dobi neki output
+                            let likedArtistLyrics = topTrackOfLikedArtist[0].lyrics
+                            /*if (likedArtistLyrics === undefined) {
+                                likedArtistLyrics = ""
+                            }*/
+                            let result = stringSimilarity.findBestMatch(likedArtistLyrics, allSimilarArtistLyrics)
+                            let ratings = result.ratings
+                            ratings = ratings.sort((r1, r2) => (r1.rating > r2.rating) ? -1 : (r1.rating < r2.rating) ? 1 : 0);
+
+                            it = 0
+                            foundRecomm = 0
+                            while (foundRecomm < numOfRecommendationsPerLikedArtist && it < ratings.length) {
+                                let lyrics = ratings[it].target
+                                it++;
+                                for (similarArtist of similarArtists) {
+                                    //Za jednog artista se moze predloziti samo jedna pjesma
+                                    if (recommendedArtistTracks.filter(function (e) {
+                                        return e.artistName === similarArtist.name;
+                                    }).length === 0) {
+                                        for (similarTrack of similarArtist.tracks) {
+                                            if (similarTrack.lyrics === lyrics) {
+                                                recommendedArtistTracks.push({
+                                                    artistName: similarArtist.name,
+                                                    track: similarTrack.name,
+                                                    lyrics: similarTrack.lyrics,
+                                                    link: '/artist/' + similarArtist.id
+                                                })
+                                                foundRecomm++;
+                                            }
+                                        }
                                     }
                                 }
                             }
+                            /*  for (i = 0; i < numOfRecommendationsPerLikedArtist; i++) {
+                                  let lyrics = ratings[i].target
+                                  for (similarArtist of similarArtists) {
+                                      for (similarTrack of similarArtist.tracks) {
+                                          if (similarTrack.lyrics === lyrics) {
+                                              recommendedArtistTracks.push({
+                                                  artistName: similarArtist.name,
+                                                  track: similarTrack.name,
+                                                  lyrics: similarTrack.lyrics,
+                                                  link: '/artist/' + similarArtist.id
+                                              })
+                                          }
+                                      }
+                                  }
+                              }*/
+
                         }
                     })
             }
+
 
             const count = recommendedArtistTracks.length
             if (skip >= count) {
