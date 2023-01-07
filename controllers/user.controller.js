@@ -48,4 +48,16 @@ const logout = (req, res) => {
     })
 }
 
-module.exports = {getUser, getMyUser, logout}
+const postInfo = async (req,res) =>{
+    const age = req.body.age ? parseInt(req.body.age) : null;
+    if(!age){
+        res.status(400).send('Bad Request');
+        return;
+    }
+    const user = await db.first('user','fid',req.user.fid);
+    user.update({age})
+        .then(()=>res.status(200).send('OK'))
+        .catch(()=>res.status(500).send('Server Error'));
+}
+
+module.exports = {getUser, getMyUser, logout, postInfo}

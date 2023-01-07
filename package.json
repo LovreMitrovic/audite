@@ -26,7 +26,8 @@
     "neo4j-sessionstore": "^1.0.7",
     "neode": "^0.4.8",
     "passport": "^0.6.0",
-    "passport-facebook": "^3.0.0"
+    "passport-facebook": "^3.0.0",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"

@@ -11,5 +11,6 @@ module.exports = {
         optional: true
     },
     token:'string',
-    photo:'string'
+    photo:'string',
+    age:'integer'
 }

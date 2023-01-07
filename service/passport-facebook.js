@@ -44,8 +44,10 @@ passport.use(new facebookStrategy({
                     .then((u) => {
                          connectWithFriends(user)
                             .then(()=>console.log('[FRIENDS CONNECTED]'))
+                             .catch(()=>console.log('[ERROR CONNECTING FRIENDS]'))
                         populateWithFacebookLikes(user)
                          .then(()=>console.log('[POPULATED DB WITH USER LIKES]'))
+                            .catch(()=>console.log('[ERROR POPULATING DB WITH USER LIKES]'))
                         done(null, u.properties());
                     })
             })

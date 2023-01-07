@@ -29,15 +29,17 @@ async function populateTrack(trackName, artistNode, albumNode){
     if (!track) {
         let trackInfo = await api.getTrackInfo(artistName,trackName)
         track = await db.create('track', trackInfo)
-    }/*
+    }
     populateWithLyrics(artistName, trackName)
         .then((lyrics)=>{
-            track.update({lyrics})
-            console.log('LYRICS POPULATE: Found lyrics for '+artistName + ' ' + trackName);
+            if(lyrics){
+                track.update({lyrics})
+                console.log('LYRICS POPULATE: Found lyrics for '+artistName + ' ' + trackName);
+            }
         })
         .catch((err)=>{
             console.log('LYRICS POPULATE: Couldnt find lyrics for '+artistName + ' ' + trackName);
-        })*/
+        })
     if(albumNode){
         await albumNode.relateTo(track, 'contains_track');
     }
@@ -45,12 +47,14 @@ async function populateTrack(trackName, artistNode, albumNode){
     return track;
 }
 
-async function populateWithSImilarArtists(artist){
+async function populateWithSImilarArtists(artist,limitAlbum){
     //if(current > limit){return}
     let artistInfo = await api.getArtistInfo(artist.get('name'));
     for (let similar of artistInfo.similar.artist){
         let sartist = await db.first('artist', 'name', similar.name);
         if(!sartist){
+            populateArtist(similar.name,limitAlbum,false)
+                .then(()=>console.log('[POPULATED WITH SIMILAR ARTISTS]: getting info for artist'+ similar.name))
             let sinfo = await api.getArtistInfo(similar.name);
             sartist = await db.create('artist', sinfo);
             console.log('[SIMILAR ARTIST]:Adding '+similar.name)
@@ -65,7 +69,7 @@ async function populateWithSImilarArtists(artist){
 
 //async function populateTrack(trackName, artist)
 
-async function populateArtist(name,limitAlbum) {
+async function populateArtist(name,limitAlbum, populateSimilar = true){
     let artist = await db.first('artist', 'name', name);
     if (!artist) {
         console.log('[POPULATE]: getting info for artist'+ name);
@@ -83,6 +87,9 @@ async function populateArtist(name,limitAlbum) {
         if (num >= limitAlbum) {
             break
         }
+        if(!albumData.name){
+            continue;
+        }
         let albumInfo = await api.getAlbumInfo(name, albumData.name);
         let album = await db.first('album', 'name', albumData.name)
         if (!album) {
@@ -94,18 +101,19 @@ async function populateArtist(name,limitAlbum) {
                 album.update({image_link:link})
             })
             .catch(()=>console.log('IMAGE API: There is no image for '+albumInfo.name))
-        if (albumInfo.tracks.track) {
+        try{
             for (let trackData of albumInfo.tracks.track) {
-                await populateTrack(trackData.name,artist,album);
+                    await populateTrack(trackData.name,artist,album);
             }
+        } catch(e){console.log('[POPULATE ERROR]:count populate with single tracks')}
 
-        }
         await artist.relateTo(album, 'created_album');
         console.log('Connecting ' + name + ' and ' + albumData.name);
-        await populateWithSImilarArtists(artist)
-            .then(()=>console.log('[POPULATED WITH SIMILAR ARTISTS]'))
-            .catch(()=>console.log('[ERROR POPULATED WITH SIMILAR ARTISTS]'))
-        num += 1;
+        if(populateSimilar){
+            await populateWithSImilarArtists(artist,limitAlbum)
+                .then(()=>console.log('[POPULATED WITH SIMILAR ARTISTS]'))
+                .catch(()=>console.log('[ERROR POPULATED WITH SIMILAR ARTISTS]'))
+        }
     }
     return artist;
 }
@@ -117,7 +125,7 @@ async function populateWithFacebookLikes(userObj){
         let artist = await db.first('artist','name',page.name);
         if (!artist){
             try{
-                artist = await populateArtist(page.name, 4);
+                artist = await populateArtist(page.name, 3,true);
             } catch(e) {
                 console.log(e);
                 continue;
@@ -139,4 +147,4 @@ async function connectWithFriends(userObj){
     }
 }
 
-module.exports = {populateArtist, populateWithSImilarArtists, populateWithFacebookLikes, connectWithFriends, populateTrack}
+module.exports = {populateArtist, populateWithSImilarArtists, populateWithFacebookLikes, connectWithFriends, populateTrack, populateWithLyrics}
