@@ -65,10 +65,10 @@ const recommendArtistsBasedOnLikes = (req, res) => {
                 data: similarArtistsArray.slice(skip, skip + limit),
                 _links: {
                     next: skip + limit <= count
-                        ? `/recommend_strategy1/?limit=${limit}&skip=${skip + limit}`
+                        ? `/recommend-likes/?limit=${limit}&skip=${skip + limit}`
                         : null,
                     back: skip - limit >= 0
-                        ? `/recommend_strategy1/?limit=${limit}&skip=${skip - limit}`
+                        ? `/recommend-likes/?limit=${limit}&skip=${skip - limit}`
                         : null,
                     count
                 },
@@ -230,10 +230,10 @@ const recommendSimilarTracks = async (req, res) => {
                 data: recommendedArtistTracks.slice(skip, skip + limit),
                 _links: {
                     next: skip + limit <= count
-                        ? `/recommend_strategy2/?limit=${limit}&skip=${skip + limit}`
+                        ? `/recommend-similar-track/?limit=${limit}&skip=${skip + limit}`
                         : null,
                     back: skip - limit >= 0
-                        ? `/recommend_strategy2/?limit=${limit}&skip=${skip - limit}`
+                        ? `/recommend-similar-track/?limit=${limit}&skip=${skip - limit}`
                         : null,
                     count
                 },
