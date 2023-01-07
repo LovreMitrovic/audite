@@ -45,8 +45,7 @@ const getArtists = (req, res) => {
             res.send({
                 data: artists,
                 _links: {
-                    next: skip+limit <= count
-                        //izbrisi filter
+                    next: skip+limit < count
                         ? `/artists/?limit=${limit}&skip=${skip+limit}&filter=${filter}`
                         : null,
                     back: skip-limit >= 0

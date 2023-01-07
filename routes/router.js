@@ -11,6 +11,7 @@ const likeController = require('../controllers/like.controller')
 const searchController = require('../controllers/search.controller')
 const recommendStrategiesController = require("../controllers/recommend-strategies.controller");
 const imageController = require('../controllers/image.controller');
+const {getUserBasedReccomendation} = require('../controllers/recommend-userbased-strategies');
 
 router.get('/facebook', passport.authenticate('facebook', {scope:['email','user_friends']}));
 router.get('/api/auth/facebook', passport.authenticate('facebook',
@@ -52,9 +53,11 @@ router.post('/me',isLogged, userController.postInfo);
 
 router.get('/me/logout', userController.logout);
 
-router.get('/recommend_strategy1', recommendStrategiesController.recommendSimilarTracks)
+router.get('/recommend-strategy1', recommendStrategiesController.recommendSimilarTracks)
 
-router.get('/recommend_strategy2', recommendStrategiesController.recommendArtistsBasedOnLocation)
+router.get('/recommend-strategy2', recommendStrategiesController.recommendArtistsBasedOnLocation)
+
+router.get('/recommend-user-similarity', getUserBasedReccomendation);
 
 
 
