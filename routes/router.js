@@ -13,12 +13,12 @@ const recommendStrategiesController = require("../controllers/recommend-strategi
 const imageController = require('../controllers/image.controller');
 const {getUserBasedReccomendation} = require('../controllers/recommend-userbased-strategies');
 
-router.get('/facebook', passport.authenticate('facebook', {scope:['email','user_friends']}));
+router.get('/api/facebook', passport.authenticate('facebook', {scope:['email','user_friends']}));
 router.get('/api/auth/facebook', passport.authenticate('facebook',
-    {successRedirect:'/',
-        failureRedirect:'/failed'}));
+    {successRedirect:'/app/recommended-by-profile',
+        failureRedirect:'/api/failed'}));
 
-router.get('/failed', (req,res) => {
+router.get('/api/failed', (req,res) => {
     res.send('Authentification failed');
 });
 /*
