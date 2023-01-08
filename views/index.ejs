@@ -8,19 +8,17 @@
   </head>
 
   <body>
-
-
     <%if (auth){%>
       <%- include('partial/navigation')%>
       <h1>Home</h1>
       <h2>You are logged as <%= user.first_name%></h2>
+      <img src="<%= user.photo%>" alt=""/>
     <%} else {%>
       <h2>You need to login to use app</h2>
       <div>
         <a href="/facebook">Login with facebook</a>
       </div>
     <%}%>
-
     <p id="status"></p>
   </body>
 </html>
