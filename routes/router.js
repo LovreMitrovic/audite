@@ -51,16 +51,11 @@ router.get('/me',isLogged, userController.getMyUser);
 
 router.post('/me',isLogged, userController.postInfo);
 
-router.get('/me/logout', userController.logout);
+router.get('/me/logout',isLogged, userController.logout);
 
-router.get('/recommend-similar-track', recommendStrategiesController.recommendSimilarTracks)
+router.get('/recommend-similar-track',isLogged, recommendStrategiesController.recommendSimilarTracks)
 
-router.get('/recommend-likes', recommendStrategiesController.recommendArtistsBasedOnLikes)
+router.get('/recommend-likes',isLogged, recommendStrategiesController.recommendArtistsBasedOnLikes)
 
-router.get('/recommend-similar-user', getUserBasedReccomendation);
-
-
-
-
-
+router.get('/recommend-similar-user', isLogged,getUserBasedReccomendation);
 module.exports = router;
