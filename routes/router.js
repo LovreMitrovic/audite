@@ -21,13 +21,13 @@ router.get('/api/auth/facebook', passport.authenticate('facebook',
 router.get('/failed', (req,res) => {
     res.send('Authentification failed');
 });
-
+/*
 router.get('/',(req,res)=>{
     res.render('index',{
         auth:req.isAuthenticated(),
         user:req.user
     })
-})
+})*/
 
 router.get('/api/user/:fid', userController.getUser);
 
