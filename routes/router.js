@@ -15,7 +15,7 @@ const {getUserBasedReccomendation} = require('../controllers/recommend-userbased
 
 router.get('/facebook', passport.authenticate('facebook', {scope:['email','user_friends']}));
 router.get('/api/auth/facebook', passport.authenticate('facebook',
-    {successRedirect:'/me',
+    {successRedirect:'/',
         failureRedirect:'/failed'}));
 
 router.get('/failed', (req,res) => {
@@ -29,35 +29,35 @@ router.get('/',(req,res)=>{
     })
 })
 
-router.get('/user/:fid', userController.getUser);
+router.get('/api/user/:fid', userController.getUser);
 
-router.get('/artists', artistController.getArtists)
+router.get('/api/artists', artistController.getArtists)
 
-router.get('/artist/:id', isLogged, artistController.getArtist);
+router.get('/api/artist/:id', isLogged, artistController.getArtist);
 
-router.post('/:label(artist|album|track)/:id/like',isLogged, likeController.like);
+router.post('/api/:label(artist|album|track)/:id/like',isLogged, likeController.like);
 
-router.get('/:label(artist|album|track)/:id/images',isLogged, imageController.getImages);
+router.get('/api/:label(artist|album|track)/:id/images',isLogged, imageController.getImages);
 
-router.get('/album/:id', albumController.getAlbum);
+router.get('/api/album/:id', albumController.getAlbum);
 
-router.get('/track/:id', trackController.getTrack);
+router.get('/api/track/:id', trackController.getTrack);
 
-router.get('/search', searchController.getSearch);
+router.get('/api/search', searchController.getSearch);
 
-router.get('/advancedsearch', searchController.advancedSearch);
+router.get('/api/advancedsearch', searchController.advancedSearch);
 
-router.get('/me',isLogged, userController.getMyUser);
+router.get('/api/me',isLogged, userController.getMyUser);
 
-router.post('/me',isLogged, userController.postInfo);
+router.post('/api/me',isLogged, userController.postInfo);
 
-router.get('/me/logout', userController.logout);
+router.get('/api/me/logout', userController.logout);
 
-router.get('/recommend-similar-track', recommendStrategiesController.recommendSimilarTracks)
+router.get('/api/recommend-similar-track', recommendStrategiesController.recommendSimilarTracks)
 
-router.get('/recommend-likes', recommendStrategiesController.recommendArtistsBasedOnLikes)
+router.get('/api/recommend-likes', recommendStrategiesController.recommendArtistsBasedOnLikes)
 
-router.get('/recommend-similar-user', getUserBasedReccomendation);
+router.get('/api/recommend-similar-user', getUserBasedReccomendation);
 
 
 
