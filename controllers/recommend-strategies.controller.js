@@ -170,49 +170,34 @@ const recommendSimilarTracks = async (req, res) => {
                             /*if (likedArtistLyrics === undefined) {
                                 likedArtistLyrics = ""
                             }*/
-                            let result = stringSimilarity.findBestMatch(likedArtistLyrics, allSimilarArtistLyrics)
-                            let ratings = result.ratings
-                            ratings = ratings.sort((r1, r2) => (r1.rating > r2.rating) ? -1 : (r1.rating < r2.rating) ? 1 : 0);
+                                let result = stringSimilarity.findBestMatch(likedArtistLyrics, allSimilarArtistLyrics);
+                                let ratings = result.ratings
+                                ratings = ratings.sort((r1, r2) => (r1.rating > r2.rating) ? -1 : (r1.rating < r2.rating) ? 1 : 0);
 
-                            it = 0
-                            foundRecomm = 0
-                            while (foundRecomm < numOfRecommendationsPerLikedArtist && it < ratings.length) {
-                                let lyrics = ratings[it].target
-                                it++;
-                                for (similarArtist of similarArtists) {
-                                    //Provjerava dal vec postoji isti track
-                                    if (recommendedArtistTracks.filter(function (e) {
-                                        return e.lyrics === lyrics;
-                                    }).length === 0) {
-                                        for (similarTrack of similarArtist.tracks) {
-                                            if (similarTrack.lyrics === lyrics) {
-                                                recommendedArtistTracks.push({
-                                                    artistName: similarArtist.name,
-                                                    track: similarTrack.name,
-                                                    lyrics: similarTrack.lyrics,
-                                                    link: '/track/' + similarTrack.id
-                                                })
-                                                foundRecomm++;
+                                it = 0
+                                foundRecomm = 0
+                                while (foundRecomm < numOfRecommendationsPerLikedArtist && it < ratings.length) {
+                                    let lyrics = ratings[it].target
+                                    it++;
+                                    for (similarArtist of similarArtists) {
+                                        //Provjerava dal vec postoji isti track
+                                        if (recommendedArtistTracks.filter(function (e) {
+                                            return e.lyrics === lyrics;
+                                        }).length === 0) {
+                                            for (similarTrack of similarArtist.tracks) {
+                                                if (similarTrack.lyrics === lyrics) {
+                                                    recommendedArtistTracks.push({
+                                                        artistName: similarArtist.name,
+                                                        track: similarTrack.name,
+                                                        lyrics: similarTrack.lyrics,
+                                                        link: '/track/' + similarTrack.id
+                                                    })
+                                                    foundRecomm++;
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            /*  for (i = 0; i < numOfRecommendationsPerLikedArtist; i++) {
-                                  let lyrics = ratings[i].target
-                                  for (similarArtist of similarArtists) {
-                                      for (similarTrack of similarArtist.tracks) {
-                                          if (similarTrack.lyrics === lyrics) {
-                                              recommendedArtistTracks.push({
-                                                  artistName: similarArtist.name,
-                                                  track: similarTrack.name,
-                                                  lyrics: similarTrack.lyrics,
-                                                  link: '/artist/' + similarArtist.id
-                                              })
-                                          }
-                                      }
-                                  }
-                              }*/
 
                         }
                     })
@@ -239,7 +224,11 @@ const recommendSimilarTracks = async (req, res) => {
                 },
                 _filter: null
             })
-        });
+        }).catch(() => {
+            res.send({data:[]})
+        }
+
+    )
 
 }
 
