@@ -51,6 +51,11 @@ app.use(passport.session());
 
 app.use(approuter)
 
+/* GET React App */
+app.use(function(req, res, next) {
+	res.sendFile(path.join(__dirname, 'public', 'index.html'));
+ });
+
 const httpsOptions = {
 	cert: fs.readFileSync(path.join(__dirname, 'ssl', 'cert.pem')),
 	key: fs.readFileSync(path.join(__dirname, 'ssl', 'key.pem')),
